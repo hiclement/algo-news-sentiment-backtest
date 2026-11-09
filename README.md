@@ -61,6 +61,39 @@ Au total, plus de **1 million de stratégies** ont été évaluées. Les 50 meil
 
 Deux stratégies issues d'une première recherche, retestées après l'ajout du masque RTH : « Sécurité » (trial 47006) et « Fréquence » (trial 27405).
 
+## Bilan : ce que j'ai appris et ce que j'ai construit
+
+### Ce que j'ai réussi à mettre en œuvre
+- **Une chaîne de données complète**, de bout en bout : collecte via l'API Alpaca avec reprise sur incident, scoring de 16 607 titres par LLM (Gemini) en une seule passe mise en cache, et fusion avec 2,4 M de bougies à la minute.
+- **Un simulateur de backtest réaliste** : exécution en t+1 sans look-ahead, coûts dépendant de la volatilité, gaps sur les stops, fuseau horaire New York.
+- **Un moteur de recherche massivement parallèle** : plus d'1 million de stratégies évaluées, avec validation croisée glissante et un score de robustesse qui pénalise l'instabilité.
+- **La détection et la correction de mes propres biais** : j'ai mesuré que le hors-séance gonflait artificiellement les gains (jusqu'à 36 % du PnL d'une stratégie), compris le mécanisme et corrigé sans introduire de nouveau biais. J'ai aussi corrigé un bug de reprise qui corrompait mes fichiers de résultats.
+
+### Pourquoi ça n'a pas donné de stratégie exploitable
+Ce sont des hypothèses, que je n'ai pas toutes testées.
+
+1. **Du bruit sélectionné.** Avec 10 paramètres libres et plus d'1 million d'essais, le meilleur résultat est surtout un maximum statistique. Le PnL médian en validation est de −41 %. Mon Robust_Score pénalise l'instabilité mais ne corrige pas le biais de sélection : aucune correction pour tests multiples (Deflated Sharpe Ratio, test de White).
+2. **Pas de test hors échantillon.** Les fenêtres de validation ont servi à classer les stratégies. Elles ne sont donc plus indépendantes, et il manque une période finale jamais touchée.
+3. **Un signal probablement déjà dans le prix.** Les titres d'actions très liquides comme celles de mon univers sont lus et traités par des acteurs bien plus rapides que moi. Une news à la minute près arrive peut-être trop tard.
+4. **Un score de sentiment grossier.** Je ne score que le titre, sans le corps de l'article, la surprise par rapport aux attentes ni la nouveauté de l'information. Un modèle léger et un seul prompt ajoutent du bruit.
+5. **Un score linéaire trop simple.** Une somme pondérée de quatre z-scores avec seuils fixes ne capture ni les interactions (une bonne news en forte volatilité) ni les régimes de marché.
+6. **Des coûts sous-estimés.** 5 bps par côté est optimiste pour du trading à haute fréquence : le slippage et l'impact sur le prix peuvent annuler un avantage de quelques dizaines de bps.
+7. **Un univers étroit.** Neuf méga-caps très corrélées, sur une période qui n'a connu qu'un seul type de marché.
+
+### Pistes de recherche
+- **Évaluer correctement** : réserver une période finale intouchée, appliquer le Deflated Sharpe Ratio et utiliser une validation walk-forward purgée avec embargo.
+- **Réduire l'espace de recherche** : passer à une optimisation bayésienne, avec une régularisation ou un nombre de paramètres limité.
+- **Mesurer d'abord, optimiser ensuite** : une étude d'événements (rendement moyen après une news positive ou négative, à plusieurs horizons) dirait si un signal existe avant de chercher des paramètres.
+- **Améliorer le signal** : scorer le texte complet, mesurer la surprise et la nouveauté, tester des modèles plus capables et comparer plusieurs prompts.
+- **Élargir l'univers** : small et mid caps moins couvertes, où l'information circule plus lentement, et périodes plus variées.
+- **Modéliser les coûts de façon réaliste** : spread, slippage et impact sur le prix, avec des données bid/ask.
+- **Passer à des modèles non linéaires** : gradient boosting ou méthodes par régimes, avec une validation stricte.
+
+### En résumé
+Je n'ai pas trouvé de stratégie rentable, et ce dépôt ne prétend pas le contraire. Je l'ai surtout mené comme un exercice de rigueur : construire un banc d'essai honnête, repérer ce qui le faussait, et reconnaître qu'un bon score en recherche ne prouve rien. Le résultat le plus utile est la méthode, et la liste de ce qu'il faudrait faire pour conclure sérieusement.
+
+---
+
 ## Utilisation
 
 ```bash
