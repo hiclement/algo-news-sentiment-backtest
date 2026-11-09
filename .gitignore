@@ -1,0 +1,6 @@
+.env
+__pycache__/
+*.parquet
+*.bak
+backtest_results_*.csv
+stock_data/
