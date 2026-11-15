@@ -110,4 +110,4 @@ Les scripts s'exécutent depuis le dossier qui contient les fichiers de données
 
 > Le module `cv_splits.py` (génération des fenêtres de validation croisée) n'est pas inclus dans ce dépôt, il faut donc le recréer pour relancer `backtest_search_v10.py`.
 
-*Projet de recherche et d'apprentissage, pas un conseil en investissement.*
+*Projet de recherche, non un conseil en investissement.*
